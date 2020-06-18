@@ -43,7 +43,7 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
     public static final ListStoresAction INSTANCE = new ListStoresAction();
 
     private ListStoresAction() {
-        super(NAME, ListStoresActionResponse::new);
+        super(NAME);
     }
 
     @Override
@@ -55,12 +55,6 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
         @Override
         public ActionRequestValidationException validate() {
             return null;
-        }
-
-        public ListStoresActionRequest() {}
-
-        public ListStoresActionRequest(StreamInput in) throws IOException {
-            super(in);
         }
     }
 
@@ -87,6 +81,7 @@ public class ListStoresAction extends ActionType<ListStoresActionResponse> {
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
+            super.writeTo(out);
             out.writeMap(stores, StreamOutput::writeString, (w, i) -> i.writeTo(w));
         }
 

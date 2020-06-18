@@ -1,50 +1,32 @@
 {
   "ltr.create_model": {
     "stability": "stable",
+    "methods" : ["PUT"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr/_model/{name}",
-          "parts": {
-            "name": {
-              "required": true,
-              "type": "string",
-              "description": "The model name"
-            }
-          },
-          "methods": [
-            "PUT"
-          ]
+      "path": "/_ltr/{store}/_model/{name}",
+      "paths": ["/_ltr/_model/{name}", "/_ltr/{store}/_model/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
         },
-        {
-          "path": "/_ltr/{store}/_model/{name}",
-          "parts": {
-            "name": {
-              "required": true,
-              "type": "string",
-              "description": "The model name"
-            },
-            "store": {
-              "required": false,
-              "type": "string",
-              "description": "The store name"
-            }
-          },
-          "methods": [
-            "PUT"
-          ]
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The model name"
         }
-      ]
+      },
+      "params": {
+        "routing": {
+          "type" : "string",
+          "description" : "Specific routing value"
+        }
+      }
     },
     "body": {
-      "required": "true",
-      "description": "The model"
-    },
-    "params": {
-      "routing": {
-        "type": "string",
-        "description": "Specific routing value"
-      }
+      "description" : "The model",
+      "required": "true"
     }
   }
 }

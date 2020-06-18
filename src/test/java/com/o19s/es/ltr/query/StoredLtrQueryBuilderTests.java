@@ -45,6 +45,7 @@ import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.junit.Before;
 
@@ -189,7 +190,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
 
     @Override
     protected void doAssertLuceneQuery(StoredLtrQueryBuilder queryBuilder,
-                                       Query query, QueryShardContext context) throws IOException {
+                                       Query query, SearchContext context) throws IOException {
         assertThat(query, instanceOf(RankerQuery.class));
         RankerQuery rquery = (RankerQuery) query;
         Iterator<Query> ite = rquery.stream().iterator();
@@ -239,7 +240,7 @@ public class StoredLtrQueryBuilderTests extends AbstractQueryTestCase<StoredLtrQ
         assert context.isCacheable();
         QueryBuilder rewritten = rewriteQuery(queryBuilder, new QueryShardContext(context));
         assertNotNull(rewritten.toQuery(context));
-        assertTrue("query should be cacheable: " + queryBuilder.toString(), context.isCacheable());
+        assertFalse("query should not be cacheable: " + queryBuilder.toString(), context.isCacheable());
     }
 
     // Hack to inject our MemStore

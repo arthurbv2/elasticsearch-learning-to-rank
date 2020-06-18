@@ -18,11 +18,9 @@ package com.o19s.es.explore;
 import com.o19s.es.ltr.LtrQueryParserPlugin;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 
 import java.io.IOException;
@@ -62,21 +60,6 @@ public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQue
         assertEquals(builder.statsType(), "stddev_raw_tf");
     }
 
-    @Override
-    public void testMustRewrite() throws IOException {
-        QueryShardContext context = createShardContext();
-        context.setAllowUnmappedFields(true);
-        ExplorerQueryBuilder queryBuilder = createTestQueryBuilder();
-        queryBuilder.boost(AbstractQueryBuilder.DEFAULT_BOOST);
-        QueryBuilder rewritten = queryBuilder.rewrite(context);
-
-        // though the query may be rewritten, we assert that we
-        // always rewrite to an ExplorerQueryBuilder (same goes for ExplorerQuery...)
-        assertThat(rewritten, instanceOf(ExplorerQueryBuilder.class));
-        Query q = rewritten.toQuery(context);
-        assertThat(q, instanceOf(ExplorerQuery.class));
-    }
-
     public void testMissingQuery() throws Exception {
         String query =  " {" +
                         "  \"match_explorer\": {" +
@@ -102,7 +85,7 @@ public class ExplorerQueryBuilderTests extends AbstractQueryTestCase<ExplorerQue
     }
 
     @Override
-    protected void doAssertLuceneQuery(ExplorerQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
+    protected void doAssertLuceneQuery(ExplorerQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
         assertThat(query, instanceOf(ExplorerQuery.class));
     }
 }

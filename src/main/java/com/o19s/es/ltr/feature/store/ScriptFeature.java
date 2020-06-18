@@ -4,8 +4,7 @@ import com.o19s.es.ltr.LtrQueryContext;
 import com.o19s.es.ltr.feature.Feature;
 import com.o19s.es.ltr.feature.FeatureSet;
 import com.o19s.es.ltr.query.LtrRewritableQuery;
-import com.o19s.es.ltr.query.LtrRewriteContext;
-import com.o19s.es.ltr.ranker.LogLtrRanker;
+import com.o19s.es.ltr.ranker.LtrRanker;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -32,12 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ScriptFeature implements Feature {
     public static final String TEMPLATE_LANGUAGE = "script_feature";
     public static final String FEATURE_VECTOR = "feature_vector";
-    public static final String EXTRA_LOGGING = "extra_logging";
     public static final String EXTRA_SCRIPT_PARAMS = "extra_script_params";
 
     private final String name;
@@ -110,32 +109,25 @@ public class ScriptFeature implements Feature {
 
 
         FeatureSupplier supplier = new FeatureSupplier(featureSet);
-        ExtraLoggingSupplier extraLoggingSupplier = new ExtraLoggingSupplier();
         Map<String, Object> nparams = new HashMap<>();
         nparams.putAll(baseScriptParams);
         nparams.putAll(queryTimeParams);
         nparams.putAll(extraQueryTimeParams);
         nparams.put(FEATURE_VECTOR, supplier);
-        nparams.put(EXTRA_LOGGING, extraLoggingSupplier);
         Script script = new Script(this.script.getType(), this.script.getLang(),
             this.script.getIdOrCode(), this.script.getOptions(), nparams);
-        ScoreScript.Factory factoryFactory  = context.getQueryShardContext().compile(script, ScoreScript.CONTEXT);
+        ScoreScript.Factory factoryFactory  = context.getQueryShardContext().getScriptService().compile(script, ScoreScript.CONTEXT);
         ScoreScript.LeafFactory leafFactory = factoryFactory.newFactory(nparams, context.getQueryShardContext().lookup());
-        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory,
-                context.getQueryShardContext().index().getName(),
-                context.getQueryShardContext().getShardId(),
-                context.getQueryShardContext().indexVersionCreated());
-        return new LtrScript(function, supplier, extraLoggingSupplier);
+        ScriptScoreFunction function = new ScriptScoreFunction(script, leafFactory);
+        return new LtrScript(function, supplier);
     }
 
     static class LtrScript extends Query implements LtrRewritableQuery {
         private final ScriptScoreFunction function;
         private final FeatureSupplier supplier;
-        private final ExtraLoggingSupplier extraLoggingSupplier;
-        LtrScript(ScriptScoreFunction function, FeatureSupplier supplier, ExtraLoggingSupplier extraLoggingSupplier) {
+        LtrScript(ScriptScoreFunction function, FeatureSupplier supplier) {
             this.function = function;
             this.supplier = supplier;
-            this.extraLoggingSupplier = extraLoggingSupplier;
         }
 
         @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
@@ -166,15 +158,8 @@ public class ScriptFeature implements Feature {
         }
 
         @Override
-        public Query ltrRewrite(LtrRewriteContext context) throws IOException {
-            supplier.set(context.getFeatureVectorSupplier());
-
-            LogLtrRanker.LogConsumer consumer = context.getLogConsumer();
-            if (consumer != null) {
-                extraLoggingSupplier.setSupplier(consumer::getExtraLoggingMap);
-            } else {
-                extraLoggingSupplier.setSupplier(() -> null);
-            }
+        public Query ltrRewrite(Supplier<LtrRanker.FeatureVector> vectorSupplier) throws IOException {
+            supplier.set(vectorSupplier);
             return this;
         }
     }

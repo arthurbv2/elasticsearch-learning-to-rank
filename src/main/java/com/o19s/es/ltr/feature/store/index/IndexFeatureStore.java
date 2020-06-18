@@ -94,12 +94,12 @@ public class IndexFeatureStore implements FeatureStore {
     }
 
     private final String index;
-    private final Supplier<Client> clientSupplier;
+    private final Client client;
     private final LtrRankerParserFactory parserFactory;
 
-    public IndexFeatureStore(String index, Supplier<Client> clientSupplier, LtrRankerParserFactory factory) {
+    public IndexFeatureStore(String index, Client client, LtrRankerParserFactory factory) {
         this.index = Objects.requireNonNull(index);
-        this.clientSupplier = Objects.requireNonNull(clientSupplier);
+        this.client = Objects.requireNonNull(client);
         this.parserFactory = Objects.requireNonNull(factory);
     }
 
@@ -120,9 +120,6 @@ public class IndexFeatureStore implements FeatureStore {
 
     /**
      * Construct the elasticsearch index name based on a store name
-     *
-     * @param storeName the store name
-     * @return the name of the elasticsearch index based on the given store name
      */
     public static String indexName(String storeName) {
         if (Objects.requireNonNull(storeName).isEmpty()) {
@@ -133,13 +130,12 @@ public class IndexFeatureStore implements FeatureStore {
 
     /**
      * Infer the store name based on an elasticsearch index name
-     * This function is only meant for user display, _default_ is returned in case indexName equals to DEFAULT_STORE.
+     * This function is only meant for user display, _default_ is returned
+     * in case indexName equals to DEFAULT_STORE.
+     *
+     * @throws IllegalArgumentException if indexName is not a valid
+     * index name.
      * @see IndexFeatureStore#isIndexStore(String)
-     *
-     * @param indexName the index name to infer the store name from
-     * @return the store name inferred from the index name
-     *
-     * @throws IllegalArgumentException if indexName is not a valid index name,
      */
     public static String storeName(String indexName) {
         if (!isIndexStore(indexName)) {
@@ -153,11 +149,9 @@ public class IndexFeatureStore implements FeatureStore {
     }
 
     /**
-     * Returns if this index name is a possible index store
+     * Returns true if this index name is a possible index store
+     * false otherwise.
      * The index must be {@link #DEFAULT_STORE} or starts with {@link #STORE_PREFIX}
-     *
-     * @param indexName the index name to check
-     * @return true if this index name is a possible index store, false otherwise.
      */
     public static boolean isIndexStore(String indexName) {
         return Objects.requireNonNull(indexName).equals(DEFAULT_STORE) ||
@@ -195,15 +189,11 @@ public class IndexFeatureStore implements FeatureStore {
     }
 
     private Supplier<GetResponse> internalGet(String id) {
-        return () -> clientSupplier.get().prepareGet(index, ES_TYPE, id).get();
+        return () -> client.prepareGet(index, ES_TYPE, id).get();
     }
 
     /**
      * Generate the source doc ready to be indexed in the store
-     *
-     * @param elt the storable element to build the source document for
-     * @return the source-doc to be indexed by the store
-     * @throws IOException in case of failures
      */
     public static XContentBuilder toSource(StorableElement elt) throws IOException {
         XContentBuilder source = XContentFactory.contentBuilder(Requests.INDEX_CONTENT_TYPE);
@@ -288,7 +278,6 @@ public class IndexFeatureStore implements FeatureStore {
                 .put(IndexMetaData.INDEX_AUTO_EXPAND_REPLICAS_SETTING.getKey(), "0-2")
                 .put(STORE_VERSION_PROP.getKey(), VERSION)
                 .put(IndexMetaData.SETTING_PRIORITY, Integer.MAX_VALUE)
-                .put(IndexMetaData.SETTING_INDEX_HIDDEN, true)
                 .put(Settings.builder()
                         .loadFromSource(readResourceFile(indexName, ANALYSIS_FILE), XContentType.JSON)
                         .build())
@@ -296,10 +285,10 @@ public class IndexFeatureStore implements FeatureStore {
     }
 
     /**
-     * Validate the feature store name
-     * Must not bear an ambiguous name such as feature/featureset/model and be a valid indexName
+     * Validate the feature store name.
+     * Must not bear an ambiguous name such as feature/featureset/model
+     * and be a valid indexName.
      *
-     * @param storeName the store name to validate
      * @throws IllegalArgumentException if the name is invalid
      */
     public static void validateFeatureStoreName(String storeName) {

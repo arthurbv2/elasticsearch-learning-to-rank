@@ -27,12 +27,10 @@ import org.elasticsearch.action.support.nodes.TransportNodesAction;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
-import java.io.IOException;
 import java.util.List;
 
 public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsNodesRequest, CachesStatsNodesResponse,
@@ -62,8 +60,8 @@ public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsN
     }
 
     @Override
-    protected CachesStatsNodeResponse newNodeResponse(StreamInput in) throws IOException {
-        return new CachesStatsNodeResponse(in);
+    protected CachesStatsNodeResponse newNodeResponse() {
+        return new CachesStatsNodeResponse();
     }
 
     @Override
@@ -73,10 +71,5 @@ public class TransportCacheStatsAction extends TransportNodesAction<CachesStatsN
 
     public static class CachesStatsNodeRequest extends BaseNodeRequest {
         public CachesStatsNodeRequest() {}
-
-        public CachesStatsNodeRequest(StreamInput in) throws IOException {
-            super(in);
-        }
-
     }
 }

@@ -1,40 +1,22 @@
 {
   "ltr.get_featureset": {
     "stability": "stable",
+    "methods" : ["GET"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr/_featureset/{name}",
-          "parts": {
-            "name": {
-              "required": true,
-              "type": "string",
-              "description": "The featureset name"
-            }
-          },
-          "methods": [
-            "GET"
-          ]
+      "path": "/_ltr/{store}/_featureset/{name}",
+      "paths": ["/_ltr/_featureset/{name}", "/_ltr/{store}/_featureset/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
         },
-        {
-          "path": "/_ltr/{store}/_featureset/{name}",
-          "parts": {
-            "name": {
-              "required": true,
-              "type": "string",
-              "description": "The featureset name"
-            },
-            "store": {
-              "required": false,
-              "type": "string",
-              "description": "The store name"
-            }
-          },
-          "methods": [
-            "GET"
-          ]
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The featureset name"
         }
-      ]
+      }
     },
     "body": null
   }

@@ -28,6 +28,7 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.StatusToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
@@ -41,9 +42,16 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
     public static final CreateModelFromSetAction INSTANCE = new CreateModelFromSetAction();
 
     protected CreateModelFromSetAction() {
-        super(NAME, CreateModelFromSetResponse::new);
+        super(NAME);
     }
 
+    /**
+     * Creates a new response instance.
+     */
+    @Override
+    public Reader<CreateModelFromSetResponse> getResponseReader() {
+        return CreateModelFromSetResponse::new;
+    }
 
     public static class CreateModelFromSetRequestBuilder extends ActionRequestBuilder<CreateModelFromSetRequest,
         CreateModelFromSetResponse> {
@@ -88,18 +96,6 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
         private FeatureValidation validation;
 
         public CreateModelFromSetRequest() {
-
-        }
-
-        public CreateModelFromSetRequest(StreamInput in) throws IOException {
-            super(in);
-            store = in.readString();
-            featureSetName = in.readString();
-            expectedSetVersion = in.readOptionalLong();
-            modelName = in.readString();
-            definition = new StoredLtrModel.LtrModelDefinition(in);
-            routing = in.readOptionalString();
-            validation = in.readOptionalWriteable(FeatureValidation::new);
         }
 
         @Override
@@ -118,6 +114,18 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
                 arve = addValidationError("defition must be set", arve);
             }
             return arve;
+        }
+
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            super.readFrom(in);
+            store = in.readString();
+            featureSetName = in.readString();
+            expectedSetVersion = in.readOptionalLong();
+            modelName = in.readString();
+            definition = new StoredLtrModel.LtrModelDefinition(in);
+            routing = in.readOptionalString();
+            validation = in.readOptionalWriteable(FeatureValidation::new);
         }
 
         @Override
@@ -177,7 +185,8 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
             super(in);
             int version = in.readVInt();
             assert version == VERSION;
-            response = new IndexResponse(in);
+            response = new IndexResponse();
+            response.readFrom(in);
         }
 
         public CreateModelFromSetResponse(IndexResponse response) {
@@ -186,6 +195,7 @@ public class CreateModelFromSetAction extends ActionType<CreateModelFromSetRespo
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
+            super.writeTo(out);
             out.writeVInt(VERSION);
             response.writeTo(out);
         }

@@ -1,46 +1,34 @@
 {
   "ltr.list_model": {
     "stability": "stable",
+    "methods" : ["GET"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr/_model",
-          "methods": [
-            "GET"
-          ]
-        },
-        {
-          "path": "/_ltr/{store}/_model",
-          "parts": {
-            "store": {
-              "required": false,
-              "type": "string",
-              "description": "The store name"
-            }
-          },
-          "methods": [
-            "GET"
-          ]
+      "paths": ["/_ltr/_model", "/_ltr/{store}/_model"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
         }
-      ]
-    },
-    "body": null,
-    "params": {
-      "prefix": {
-        "required": false,
-        "type": "string",
-        "description": "Filter elements by name prefix"
       },
-      "from": {
-        "required": false,
-        "type": "integer",
-        "description": "Page results"
-      },
-      "size": {
-        "required": false,
-        "type": "integer",
-        "description": "Page size"
+      "params": {
+        "prefix": {
+          "type": "string",
+          "required": false,
+          "description": "Filter elements by name prefix"
+        },
+        "size": {
+          "type": "integer",
+          "required": false,
+          "description": "Page size"
+        },
+        "from": {
+          "type": "integer",
+          "required": false,
+          "description": "Page results"
+        }
       }
-    }
+    },
+    "body": null
   }
 }

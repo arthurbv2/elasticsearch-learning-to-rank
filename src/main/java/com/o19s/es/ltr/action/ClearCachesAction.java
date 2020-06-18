@@ -42,7 +42,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
     public static final ClearCachesAction INSTANCE = new ClearCachesAction();
 
     private ClearCachesAction() {
-        super(NAME, ClearCachesNodesResponse::new);
+        super(NAME);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
     }
 
     public static class RequestBuilder extends ActionRequestBuilder<ClearCachesNodesRequest, ClearCachesNodesResponse> {
-        public RequestBuilder(ElasticsearchClient client) throws IOException {
+        public RequestBuilder(ElasticsearchClient client) {
             super(client, ClearCachesAction.INSTANCE, new ClearCachesNodesRequest());
         }
     }
@@ -60,18 +60,6 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
         private String store;
         private Operation operation;
         private String name;
-
-
-        public ClearCachesNodesRequest(StreamInput in) throws IOException {
-            super(in);
-            store = in.readString();
-            operation = Operation.values()[in.readVInt()];
-            name = in.readOptionalString();
-        }
-
-        public ClearCachesNodesRequest() {
-            super((String[]) null);
-        }
 
         @Override
         public ActionRequestValidationException validate() {
@@ -88,6 +76,14 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
                 arve = addValidationError("name must be provided if clearing a specific element", arve);
             }
             return arve;
+        }
+
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            super.readFrom(in);
+            store = in.readString();
+            operation = Operation.values()[in.readVInt()];
+            name = in.readOptionalString();
         }
 
         public void clearStore(String storeName) {
@@ -143,7 +139,7 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
 
     public static class ClearCachesNodesResponse extends BaseNodesResponse<ClearCachesNodeResponse> {
         public ClearCachesNodesResponse(StreamInput in) throws IOException {
-            super(in);
+            super.readFrom(in);
         }
 
         public ClearCachesNodesResponse(ClusterName clusterName, List<ClearCachesNodeResponse> responses,
@@ -158,20 +154,21 @@ public class ClearCachesAction extends ActionType<ClearCachesNodesResponse> {
 
         @Override
         protected void writeNodesTo(StreamOutput out, List<ClearCachesNodeResponse> nodes) throws IOException {
-            out.writeList(nodes);
+            out.writeStreamableList(nodes);
         }
     }
 
     // NOOP response
     public static class ClearCachesNodeResponse extends BaseNodeResponse {
-        public ClearCachesNodeResponse(StreamInput in) throws IOException {
-            super(in);
+        public ClearCachesNodeResponse() {
         }
 
         public ClearCachesNodeResponse(DiscoveryNode node) {
             super(node);
         }
 
-
+        public ClearCachesNodeResponse(StreamInput in) throws IOException {
+            readFrom(in);
+        }
     }
 }

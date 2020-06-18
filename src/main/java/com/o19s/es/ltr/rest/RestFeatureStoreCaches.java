@@ -19,18 +19,19 @@ package com.o19s.es.ltr.rest;
 import com.o19s.es.ltr.action.CachesStatsAction;
 import com.o19s.es.ltr.action.ClearCachesAction;
 import com.o19s.es.ltr.action.ClearCachesAction.ClearCachesNodesResponse;
+
 import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BytesRestResponse;
+import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestActions.NodesResponseRestListener;
 import org.elasticsearch.rest.action.RestBuilderListener;
 
-import java.util.List;
+import java.io.IOException;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableList;
 import static org.elasticsearch.rest.RestStatus.OK;
 
 /**
@@ -45,22 +46,20 @@ import static org.elasticsearch.rest.RestStatus.OK;
  */
 public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
 
+    public RestFeatureStoreCaches(Settings settings, RestController controller) {
+        super(settings);
+        controller.registerHandler(RestRequest.Method.POST, "/_ltr/_clearcache", this);
+        controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_clearcache", this);
+        controller.registerHandler(RestRequest.Method.GET, "/_ltr/_cachestats", this);
+    }
+
     @Override
     public String getName() {
         return "Provides clear cached for stores";
     }
 
     @Override
-    public List<Route> routes() {
-        return unmodifiableList(asList(
-                new Route(RestRequest.Method.POST, "/_ltr/_clearcache"),
-                new Route(RestRequest.Method.POST, "/_ltr/{store}/_clearcache"),
-                new Route(RestRequest.Method.GET, "/_ltr/_cachestats")
-        ));
-    }
-
-    @Override
-    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
+    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
         if (request.method() == RestRequest.Method.POST) {
             return clearCache(request, client);
         } else {
@@ -70,25 +69,22 @@ public class RestFeatureStoreCaches extends FeatureStoreBaseRestHandler {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private RestChannelConsumer getStats(NodeClient client) {
-        return (channel) -> client.execute(CachesStatsAction.INSTANCE, new CachesStatsAction.CachesStatsNodesRequest(),
-        new NodesResponseRestListener(channel));
+        return (channel) -> new CachesStatsAction.CachesStatsActionBuilder(client).execute(new NodesResponseRestListener(channel));
     }
 
     private RestChannelConsumer clearCache(RestRequest request, NodeClient client) {
         String storeName = indexName(request);
-        ClearCachesAction.ClearCachesNodesRequest cacheRequest = new ClearCachesAction.ClearCachesNodesRequest();
-        cacheRequest.clearStore(storeName);
-        return (channel) -> client.execute(ClearCachesAction.INSTANCE, cacheRequest,
-            new RestBuilderListener<ClearCachesNodesResponse>(channel) {
-                @Override
-                public RestResponse buildResponse(ClearCachesNodesResponse clearCachesNodesResponse,
-                                                  XContentBuilder builder) throws Exception {
-                    builder.startObject()
-                            .field("acknowledged", true);
-                    builder.endObject();
-                    return new BytesRestResponse(OK, builder);
-                }
+        ClearCachesAction.RequestBuilder builder = new ClearCachesAction.RequestBuilder(client);
+        builder.request().clearStore(storeName);
+        return (channel) -> builder.execute(new RestBuilderListener<ClearCachesNodesResponse>(channel) {
+            @Override
+            public RestResponse buildResponse(ClearCachesNodesResponse clearCachesNodesResponse,
+                                              XContentBuilder builder) throws Exception {
+                builder.startObject()
+                        .field("acknowledged", true);
+                builder.endObject();
+                return new BytesRestResponse(OK, builder);
             }
-        );
+        });
     }
 }

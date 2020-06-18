@@ -22,7 +22,7 @@ import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
-import org.elasticsearch.Version;
+// import org.elasticsearch.Version;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.Strings;
@@ -87,11 +87,11 @@ public class StoredLtrModel implements StorableElement {
         rankingModelType = input.readString();
         rankingModel = input.readString();
         modelAsString = input.readBoolean();
-        if (input.getVersion().onOrAfter(Version.V_7_7_0)) {
-            this.parsedFtrNorms = new StoredFeatureNormalizers(input);
-        } else {
-            this.parsedFtrNorms = new StoredFeatureNormalizers();
-        }
+        // if (input.getVersion().onOrAfter(Version.V_7_7_0)) {
+        this.parsedFtrNorms = new StoredFeatureNormalizers(input);
+        // } else {
+        //    this.parsedFtrNorms = new StoredFeatureNormalizers();
+        //}
     }
 
     @Override
@@ -101,9 +101,9 @@ public class StoredLtrModel implements StorableElement {
         out.writeString(rankingModelType);
         out.writeString(rankingModel);
         out.writeBoolean(modelAsString);
-        if (out.getVersion().onOrAfter(Version.V_7_7_0)) {
-            parsedFtrNorms.writeTo(out);
-        }
+        // if (out.getVersion().onOrAfter(Version.V_7_7_0)) {
+        parsedFtrNorms.writeTo(out);
+        // }
     }
 
     public static StoredLtrModel parse(XContentParser parser) {
@@ -137,11 +137,17 @@ public class StoredLtrModel implements StorableElement {
         return new CompiledLtrModel(name, optimized, ranker);
     }
 
+    /**
+     * Name of the model
+     */
     @Override
     public String name() {
         return name;
     }
 
+    /**
+     * Type of the element
+     */
     @Override
     public String type() {
         return TYPE;
@@ -153,22 +159,16 @@ public class StoredLtrModel implements StorableElement {
     }
 
     /**
-     * @return the set of features used by the stored model
+     * The set of features used by this model
      */
     public StoredFeatureSet featureSet() {
         return featureSet;
     }
 
-    /**
-     * @return the type of the stored ranking model
-     */
     public String rankingModelType() {
         return rankingModelType;
     }
 
-    /**
-     * @return the stored ranking model
-     */
     public String rankingModel() {
         return rankingModel;
     }
@@ -281,11 +281,11 @@ public class StoredLtrModel implements StorableElement {
             type = in.readString();
             definition = in.readString();
             modelAsString = in.readBoolean();
-            if (in.getVersion().onOrAfter(Version.V_7_7_0)) {
-                this.featureNormalizers = new StoredFeatureNormalizers(in);
-            } else {
-                this.featureNormalizers = new StoredFeatureNormalizers();
-            }
+            // if (in.getVersion().onOrAfter(Version.V_7_7_0)) {
+            this.featureNormalizers = new StoredFeatureNormalizers(in);
+            // } else {
+            //    this.featureNormalizers = new StoredFeatureNormalizers();
+            // }
         }
 
         @Override
@@ -293,9 +293,9 @@ public class StoredLtrModel implements StorableElement {
             out.writeString(type);
             out.writeString(definition);
             out.writeBoolean(modelAsString);
-            if (out.getVersion().onOrAfter(Version.V_7_7_0)) {
-                this.featureNormalizers.writeTo(out);
-            }
+            // if (out.getVersion().onOrAfter(Version.V_7_7_0)) {
+            this.featureNormalizers.writeTo(out);
+            // }
         }
 
 

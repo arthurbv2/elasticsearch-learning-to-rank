@@ -1,15 +1,10 @@
 {
   "ltr.list_stores": {
     "stability": "stable",
+    "methods" : ["GET"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr",
-          "methods": [
-            "GET"
-          ]
-        }
-      ]
+      "paths": ["/_ltr"],
+      "parts": {}
     },
     "body": null
   }

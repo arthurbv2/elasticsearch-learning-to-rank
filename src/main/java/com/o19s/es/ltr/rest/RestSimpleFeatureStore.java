@@ -33,6 +33,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -54,8 +55,6 @@ import java.util.List;
 import static com.o19s.es.ltr.feature.store.StorableElement.generateId;
 import static com.o19s.es.ltr.feature.store.index.IndexFeatureStore.ES_TYPE;
 import static com.o19s.es.ltr.query.ValidatingLtrQueryBuilder.SUPPORTED_TYPES;
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.joining;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
@@ -67,39 +66,38 @@ import static org.elasticsearch.rest.RestStatus.OK;
  * Simple CRUD operation for the feature store elements.
  */
 public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler {
-    public static void register(List<RestHandler> list, RestController restController) {
+    private RestSimpleFeatureStore(Settings settings) {
+        super(settings);
+    }
+
+    public static void register(List<RestHandler> list, Settings settings, RestController restController) {
         for (String type : SUPPORTED_TYPES) {
-            list.add(new RestAddOrUpdateFeature(type));
-            list.add(new RestSearchStoreElements(type));
+            list.add(new RestAddOrUpdateFeature(settings, restController, type));
+            list.add(new RestSearchStoreElements(settings, restController, type));
         }
-        list.add(new RestStoreManager());
+        list.add(new RestStoreManager(settings, restController));
     }
 
     static class RestAddOrUpdateFeature extends RestSimpleFeatureStore {
         private final String type;
-        RestAddOrUpdateFeature(String type) {
+        RestAddOrUpdateFeature(Settings settings, RestController controller, String type) {
+            super(settings);
             this.type = type;
+            controller.registerHandler(RestRequest.Method.PUT, "/_ltr/{store}/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.PUT, "/_ltr/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.POST, "/_ltr/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/{store}/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.HEAD, "/_ltr/{store}/_" + type + "/{name}", this);
+            controller.registerHandler(RestRequest.Method.HEAD, "/_ltr/_" + type + "/{name}", this);
         }
 
         @Override
         public String getName() {
             return "Add or update a feature";
-        }
-
-        @Override
-        public List<Route> routes() {
-            return unmodifiableList(asList(
-                    new Route(RestRequest.Method.PUT, "/_ltr/{store}/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.PUT, "/_ltr/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.POST, "/_ltr/{store}/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.POST, "/_ltr/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.DELETE, "/_ltr/{store}/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.DELETE, "/_ltr/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.GET, "/_ltr/{store}/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.GET, "/_ltr/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.HEAD, "/_ltr/{store}/_" + this.type + "/{name}"),
-                    new Route(RestRequest.Method.HEAD, "/_ltr/_" + this.type + "/{name}")
-            ));
         }
 
         @Override
@@ -118,8 +116,11 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
     static class RestSearchStoreElements extends RestSimpleFeatureStore {
         private final String type;
 
-        RestSearchStoreElements(String type) {
+        RestSearchStoreElements(Settings settings, RestController controller, String type) {
+            super(settings);
             this.type = type;
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}/_" + type, this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/_" + type, this);
         }
 
         @Override
@@ -128,37 +129,27 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
         }
 
         @Override
-        public List<Route> routes() {
-            return unmodifiableList(asList(
-                new Route(RestRequest.Method.GET, "/_ltr/{store}/_" + type),
-                new Route(RestRequest.Method.GET, "/_ltr/_" + type)
-            ));
-        }
-
-        @Override
-        protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
+        protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
             return search(client, type, indexName(request), request);
         }
     }
 
     static class RestStoreManager extends RestSimpleFeatureStore {
-        @Override
-        public String getName() {
-            return "Manage the ltr store";
+        RestStoreManager(Settings settings, RestController controller) {
+            super(settings);
+            controller.registerHandler(RestRequest.Method.PUT, "/_ltr/{store}", this);
+            controller.registerHandler(RestRequest.Method.PUT, "/_ltr", this);
+            controller.registerHandler(RestRequest.Method.POST, "/_ltr/{store}", this);
+            controller.registerHandler(RestRequest.Method.POST, "/_ltr", this);
+            controller.registerHandler(RestRequest.Method.DELETE, "/_ltr/{store}", this);
+            controller.registerHandler(RestRequest.Method.DELETE, "/_ltr", this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr", this);
+            controller.registerHandler(RestRequest.Method.GET, "/_ltr/{store}", this);
         }
 
         @Override
-        public List<Route> routes() {
-            return unmodifiableList(asList(
-                new Route(RestRequest.Method.PUT, "/_ltr/{store}"),
-                new Route(RestRequest.Method.PUT, "/_ltr"),
-                new Route(RestRequest.Method.POST, "/_ltr/{store}"),
-                new Route(RestRequest.Method.POST, "/_ltr"),
-                new Route(RestRequest.Method.DELETE, "/_ltr/{store}"),
-                new Route(RestRequest.Method.DELETE, "/_ltr"),
-                new Route(RestRequest.Method.GET, "/_ltr"),
-                new Route(RestRequest.Method.GET, "/_ltr/{store}")
-            ));
+        public String getName() {
+            return "Manage the ltr store";
         }
 
         /**
@@ -285,19 +276,19 @@ public abstract class RestSimpleFeatureStore extends FeatureStoreBaseRestHandler
                             // wrap the response so we can send another request to clear the cache
                             // usually we send only one transport request from the rest layer
                             // it's still unclear which direction we should take (thick or thin REST layer?)
-                            ClearCachesAction.ClearCachesNodesRequest clearCache = new ClearCachesAction.ClearCachesNodesRequest();
+                            ClearCachesAction.RequestBuilder clearCache = new ClearCachesAction.RequestBuilder(client);
                             switch (type) {
                             case StoredFeature.TYPE:
-                                clearCache.clearFeature(indexName, name);
+                                clearCache.request().clearFeature(indexName, name);
                                 break;
                             case StoredFeatureSet.TYPE:
-                                clearCache.clearFeatureSet(indexName, name);
+                                clearCache.request().clearFeatureSet(indexName, name);
                                 break;
                             case StoredLtrModel.TYPE:
-                                clearCache.clearModel(indexName, name);
+                                clearCache.request().clearModel(indexName, name);
                                 break;
                             }
-                            client.execute(ClearCachesAction.INSTANCE, clearCache, ActionListener.wrap(
+                            clearCache.execute(ActionListener.wrap(
                                     (r) -> restR.onResponse(deleteResponse),
                                     // Is it good to fail the whole request if cache invalidation failed?
                                     restR::onFailure

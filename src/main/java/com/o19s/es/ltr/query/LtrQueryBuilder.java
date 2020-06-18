@@ -38,6 +38,7 @@ import org.elasticsearch.index.query.QueryRewriteContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -129,9 +130,8 @@ public class LtrQueryBuilder extends AbstractQueryBuilder<LtrQueryBuilder> {
         }
         features = Collections.unmodifiableList(features);
 
-        RankLibScriptEngine.RankLibModelContainer.Factory factory = context.compile(
-                _rankLibScript,
-                RankLibScriptEngine.CONTEXT);
+        RankLibScriptEngine.RankLibModelContainer.Factory factory = context.getScriptService().compile(_rankLibScript, new ScriptContext<>(
+                "ranklib", RankLibScriptEngine.RankLibModelContainer.Factory.class));
         RankLibScriptEngine.RankLibModelContainer executableScript = factory.newInstance();
         LtrRanker ranker = (LtrRanker) executableScript.run();
 

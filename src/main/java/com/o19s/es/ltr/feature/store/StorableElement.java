@@ -22,18 +22,15 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 public interface StorableElement extends ToXContent, NamedWriteable {
-    /**
-     * @return the element name
-     */
     String name();
 
     /**
-     * @return the element type
+     * Type of the element
      */
     String type();
 
     /**
-     * @return if the current element can be updated
+     * Is this element updatable
      */
     default boolean updatable() {
         return true;

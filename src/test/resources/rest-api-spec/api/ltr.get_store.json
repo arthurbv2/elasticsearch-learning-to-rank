@@ -1,22 +1,16 @@
 {
   "ltr.get_store": {
     "stability": "stable",
+    "methods" : ["GET"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr/{store}",
-          "parts": {
-            "store": {
-              "required": true,
-              "type": "string",
-              "description": "The store name"
-            }
-          },
-          "methods": [
-            "GET"
-          ]
+      "paths": ["/_ltr/{store}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": true,
+          "description": "The store name"
         }
-      ]
+      }
     },
     "body": null
   }

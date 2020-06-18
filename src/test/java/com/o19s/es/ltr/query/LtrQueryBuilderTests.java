@@ -22,10 +22,13 @@ import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
+import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 
 import java.io.IOException;
@@ -169,7 +172,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
         assert context.isCacheable();
         QueryBuilder rewritten = rewriteQuery(queryBuilder, new QueryShardContext(context));
         assertNotNull(rewritten.toQuery(context));
-        assertTrue("query should be cacheable: " + queryBuilder.toString(), context.isCacheable());
+        assertFalse("query should not be cacheable: " + queryBuilder.toString(), context.isCacheable());
     }
 
     @Override
@@ -195,21 +198,18 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
     public void testMustRewrite() throws IOException {
         Script script = new Script(ScriptType.INLINE, "ranklib", simpleModel, Collections.emptyMap());
         List<QueryBuilder> features = new ArrayList<>();
-        QueryBuilder testedFtrRewritten = null;
         boolean mustRewrite = false;
         int idx = 0;
-        // WARNING - this test assumes MatchQueryBuilder does not rewrite,
-        // but that WrappedQueryBuilder does.
         if (randomBoolean()) {
             idx++;
-            features.add(new MatchQueryBuilder("test", "foo"));
+            features.add(new TermQueryBuilder("test", "test"));
         }
         if (randomBoolean()) {
             mustRewrite = true;
-            features.add(new WrapperQueryBuilder(new MatchQueryBuilder("test", "foo3").toString()));
+            features.add(new WrapperQueryBuilder(new TermsQueryBuilder("foo", "terms query feature").toString()));
         }
         if (randomBoolean()) {
-            features.add(new MatchQueryBuilder("test", "foo2"));
+            features.add(new TermQueryBuilder("test", "test"));
         }
 
         LtrQueryBuilder builder = new LtrQueryBuilder(script, features);
@@ -224,7 +224,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
                 if (!builder.features().isEmpty()) {
                     assertEquals(builder.features().size(), rewrite.features().size());
                     assertSame(builder.rankerScript(), rewrite.rankerScript());
-                    assertEquals(new MatchQueryBuilder("test", "foo3"), rewrite.features().get(idx));
+                    assertEquals(new TermsQueryBuilder("foo", "terms query feature"), rewrite.features().get(idx));
                 }
             } else {
                 assertSame(rewrite, builder);
@@ -233,7 +233,7 @@ public class LtrQueryBuilderTests extends AbstractQueryTestCase<LtrQueryBuilder>
     }
 
     @Override
-    protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
+    protected void doAssertLuceneQuery(LtrQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
         assertThat(query, instanceOf(RankerQuery.class));
     }
 

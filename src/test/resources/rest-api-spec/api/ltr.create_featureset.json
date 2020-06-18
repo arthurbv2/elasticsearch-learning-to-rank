@@ -1,50 +1,32 @@
 {
   "ltr.create_featureset": {
     "stability": "stable",
+    "methods" : ["PUT"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr/_featureset/{name}",
-          "parts": {
-            "name": {
-              "required": true,
-              "type": "string",
-              "description": "The featureset name"
-            }
-          },
-          "methods": [
-            "PUT"
-          ]
+      "path": "/_ltr/{store}/_featureset/{name}",
+      "paths": ["/_ltr/_featureset/{name}", "/_ltr/{store}/_featureset/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
         },
-        {
-          "path": "/_ltr/{store}/_featureset/{name}",
-          "parts": {
-            "name": {
-              "required": true,
-              "type": "string",
-              "description": "The featureset name"
-            },
-            "store": {
-              "required": false,
-              "type": "string",
-              "description": "The store name"
-            }
-          },
-          "methods": [
-            "PUT"
-          ]
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The featureset name"
         }
-      ]
+      },
+      "params": {
+        "routing": {
+          "type" : "string",
+          "description" : "Specific routing value"
+        }
+      }
     },
     "body": {
-      "required": "true",
-      "description": "The featureset"
-    },
-    "params": {
-      "routing": {
-        "type": "string",
-        "description": "Specific routing value"
-      }
+      "description" : "The featureset",
+      "required": "true"
     }
   }
 }

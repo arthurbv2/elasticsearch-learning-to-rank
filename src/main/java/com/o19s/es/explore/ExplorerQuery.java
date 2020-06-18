@@ -20,19 +20,18 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.ConstantScoreScorer;
+import org.apache.lucene.search.ConstantScoreWeight;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.TermStatistics;
-import org.apache.lucene.search.ConstantScoreWeight;
-import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.ConstantScoreScorer;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BooleanClause;
-
-import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TermStatistics;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 
 import java.io.IOException;
@@ -202,28 +201,18 @@ public class ExplorerQuery extends Query {
                 }
 
             };
-        } else if (type.endsWith("_raw_tf") || type.endsWith("_raw_tp")) {
+        } else if (type.endsWith("_raw_tf")) {
             // Rewrite this into a boolean query where we can inject our PostingsExplorerQuery
             BooleanQuery.Builder qb = new BooleanQuery.Builder();
             for (Term t : terms) {
-                qb.add(makeBooleanClause(t, type));
+                qb.add(new BooleanClause(new PostingsExplorerQuery(t, PostingsExplorerQuery.Type.TF),
+                        BooleanClause.Occur.SHOULD));
             }
             // FIXME: completely refactor this class and stop accepting a random query but a list of terms directly
             // rewriting at this point is wrong, additionally we certainly build the TermContext twice for every terms
             // problem is that we rely on extractTerms which happen too late in the process
             Query q = qb.build().rewrite(searcher.getIndexReader());
             return new ExplorerQuery.ExplorerWeight(this, searcher.createWeight(q, scoreMode, boost), type);
-        }
-        throw new IllegalArgumentException("Unknown ExplorerQuery type [" + type + "]");
-    }
-
-    private BooleanClause makeBooleanClause(Term term, String type) throws IllegalArgumentException {
-        if(type.endsWith("_raw_tf")) {
-            return new BooleanClause(new PostingsExplorerQuery(term, PostingsExplorerQuery.Type.TF),
-                    BooleanClause.Occur.SHOULD);
-        }else if(type.endsWith("_raw_tp")) {
-            return new BooleanClause(new PostingsExplorerQuery(term, PostingsExplorerQuery.Type.TP),
-                    BooleanClause.Occur.SHOULD);
         }
         throw new IllegalArgumentException("Unknown ExplorerQuery type [" + type + "]");
     }
@@ -266,9 +255,6 @@ public class ExplorerQuery extends Query {
         @Override
         public Scorer scorer(LeafReaderContext context) throws IOException {
             Scorer subscorer = weight.scorer(context);
-            if (subscorer == null) {
-                return null;
-            }
             return new ExplorerScorer(weight, type, subscorer);
         }
     }

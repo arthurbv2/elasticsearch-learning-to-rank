@@ -1,15 +1,10 @@
 {
   "ltr.cache_stats": {
     "stability": "stable",
+    "methods" : ["GET"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr/_cachestats",
-          "methods": [
-            "GET"
-          ]
-        }
-      ]
+      "paths": ["/_ltr/_cachestats"],
+      "parts": {}
     },
     "body": null
   }

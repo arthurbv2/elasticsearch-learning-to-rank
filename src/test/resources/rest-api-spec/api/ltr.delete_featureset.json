@@ -1,47 +1,29 @@
 {
   "ltr.delete_featureset": {
     "stability": "stable",
+    "methods" : ["DELETE"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr/_featureset/{name}",
-          "parts": {
-            "name": {
-              "required": true,
-              "type": "string",
-              "description": "The featureset name"
-            }
-          },
-          "methods": [
-            "DELETE"
-          ]
+      "path": "/_ltr/{store}/_featureset/{name}",
+      "paths": ["/_ltr/_featureset/{name}", "/_ltr/{store}/_featureset/{name}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
         },
-        {
-          "path": "/_ltr/{store}/_featureset/{name}",
-          "parts": {
-            "name": {
-              "required": true,
-              "type": "string",
-              "description": "The featureset name"
-            },
-            "store": {
-              "required": false,
-              "type": "string",
-              "description": "The store name"
-            }
-          },
-          "methods": [
-            "DELETE"
-          ]
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The featureset name"
         }
-      ]
-    },
-    "body": null,
-    "params": {
-      "routing": {
-        "type": "string",
-        "description": "Specific routing value"
+      },
+      "params": {
+        "routing": {
+          "type" : "string",
+          "description" : "Specific routing value"
+        }
       }
-    }
+    },
+    "body": null
   }
 }

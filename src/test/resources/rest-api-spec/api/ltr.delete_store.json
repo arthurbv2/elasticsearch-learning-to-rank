@@ -1,28 +1,16 @@
 {
   "ltr.delete_store": {
     "stability": "stable",
+    "methods" : ["DELETE"],
     "url": {
-      "paths": [
-        {
-          "path": "/_ltr",
-          "methods": [
-            "DELETE"
-          ]
-        },
-        {
-          "path": "/_ltr/{store}",
-          "parts": {
-            "store": {
-              "required": false,
-              "type": "string",
-              "description": "The store name"
-            }
-          },
-          "methods": [
-            "DELETE"
-          ]
+      "paths": ["/_ltr", "/_ltr/{store}"],
+      "parts": {
+        "store": {
+          "type": "string",
+          "required": false,
+          "description": "The store name"
         }
-      ]
+      }
     },
     "body": null
   }

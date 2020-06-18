@@ -40,14 +40,12 @@ public class ExplorerScorer extends Scorer {
             for(ChildScorable child : subScorer.getChildren()) {
                 assert child.child instanceof PostingsExplorerQuery.PostingsExplorerScorer;
                 if(child.child.docID() == docID()) {
-                    ((PostingsExplorerQuery.PostingsExplorerScorer) child.child).setType(type);
                     tf_stats.add(child.child.score());
                 }
             }
         } else {
             assert subScorer instanceof PostingsExplorerQuery.PostingsExplorerScorer;
             assert subScorer.docID() == docID();
-            ((PostingsExplorerQuery.PostingsExplorerScorer) subScorer).setType(type);
             tf_stats.add(subScorer.score());
         }
 
@@ -60,18 +58,13 @@ public class ExplorerScorer extends Scorer {
                 retval = tf_stats.getMean();
                 break;
             case("max_raw_tf"):
-            case("max_raw_tp"):
                 retval = tf_stats.getMax();
                 break;
             case("min_raw_tf"):
-            case("min_raw_tp"):
                 retval = tf_stats.getMin();
                 break;
             case("stddev_raw_tf"):
                 retval = tf_stats.getStdDev();
-                break;
-            case("avg_raw_tp"):
-                retval = tf_stats.getMean();
                 break;
             default:
                 throw new RuntimeException("Invalid stat type specified.");

@@ -22,10 +22,8 @@ import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Created by doug on 12/30/16.
@@ -72,11 +70,6 @@ public class RankLibScriptEngine implements ScriptEngine {
 
     }
 
-    @Override
-    public Set<ScriptContext<?>> getSupportedContexts() {
-        return Collections.singleton(RankLibScriptEngine.CONTEXT);
-    }
-
     public static class RankLibModelContainer {
 
         public interface Factory {
@@ -98,6 +91,6 @@ public class RankLibScriptEngine implements ScriptEngine {
             return _ranker;
         }
 
-        public void execute () {}
+
     }
 }

@@ -193,10 +193,9 @@ public class RankerQuery extends Query {
         // Hopefully elastic never runs
         MutableSupplier<LtrRanker.FeatureVector> vectorSupplier = new Suppliers.FeatureVectorSupplier();
         FVLtrRankerWrapper ltrRankerWrapper = new FVLtrRankerWrapper(ranker, vectorSupplier);
-        LtrRewriteContext context = new LtrRewriteContext(ranker, vectorSupplier);
         for (Query q : queries) {
             if (q instanceof LtrRewritableQuery) {
-                q = ((LtrRewritableQuery)q).ltrRewrite(context);
+                q = ((LtrRewritableQuery)q).ltrRewrite(vectorSupplier);
             }
             weights.add(searcher.createWeight(q, ScoreMode.COMPLETE, boost));
         }

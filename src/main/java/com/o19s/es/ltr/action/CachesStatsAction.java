@@ -30,6 +30,7 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
@@ -43,17 +44,15 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
     public static final CachesStatsAction INSTANCE = new CachesStatsAction();
 
     protected CachesStatsAction() {
-        super(NAME, CachesStatsNodesResponse::new);
+        super(NAME);
+    }
+
+    @Override
+    public Reader<CachesStatsNodesResponse> getResponseReader() {
+        return CachesStatsNodesResponse::new;
     }
 
     public static class CachesStatsNodesRequest extends BaseNodesRequest<CachesStatsNodesRequest> {
-        public CachesStatsNodesRequest(StreamInput in) throws IOException {
-            super(in);
-        }
-
-        public CachesStatsNodesRequest() {
-            super((String[]) null);
-        }
     }
 
     public static class CachesStatsNodesResponse extends BaseNodesResponse<CachesStatsNodeResponse> implements ToXContent {
@@ -61,7 +60,7 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
         private Map<String, StatDetails> byStore;
 
         public CachesStatsNodesResponse(StreamInput in) throws IOException {
-            super(in);
+            super.readFrom(in);
             allStores = new StatDetails(in);
             byStore = in.readMap(StreamInput::readString, StatDetails::new);
         }
@@ -83,7 +82,7 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
 
         @Override
         protected void writeNodesTo(StreamOutput out, List<CachesStatsNodeResponse> nodes) throws IOException {
-            out.writeList(nodes);
+            out.writeStreamableList(nodes);
         }
 
         @Override
@@ -121,22 +120,30 @@ public class CachesStatsAction extends ActionType<CachesStatsNodesResponse> {
         private StatDetails allStores;
         private Map<String, StatDetails> byStore;
 
+        CachesStatsNodeResponse() {
+            empty();
+        }
         CachesStatsNodeResponse(DiscoveryNode node) {
             super(node);
             empty();
         }
 
         CachesStatsNodeResponse(StreamInput in) throws IOException {
-            super(in);
-            allStores = new StatDetails(in);
-            byStore = in.readMap(StreamInput::readString, StatDetails::new);
+            readFrom(in);
         }
 
-        @Override
+            @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             allStores.writeTo(out);
             out.writeMap(byStore, StreamOutput::writeString, (o, s) -> s.writeTo(o));
+        }
+
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            super.readFrom(in);
+            allStores = new StatDetails(in);
+            byStore = in.readMap(StreamInput::readString, StatDetails::new);
         }
 
         public void empty() {

@@ -26,8 +26,6 @@ public interface LtrRanker {
 
     /**
      * LtrRanker name
-     *
-     * @return the ranker name
      */
     String name();
 
@@ -35,11 +33,10 @@ public interface LtrRanker {
      * Data point implementation used by this ranker
      * A data point is used to store feature scores.
      * A single instance will be created for every Scorer.
-     * The implementation does not have to be thread-safe and meant to be reused.
+     * The implementation does not have to be thread-safe and meant
+     * to be reused.
      * The ranker must always provide a new instance of the data point when this method is called with null.
-     *
      * @param reuse allows Ranker to reuse a feature vector instance
-     * @return the new feature vector to be used by this ranker
      */
     FeatureVector newFeatureVector(@Nullable FeatureVector reuse);
 
@@ -47,9 +44,6 @@ public interface LtrRanker {
      * Score the data point.
      * At this point all feature scores are set.
      * features that did not match are set with a score to 0
-     *
-     * @param point the feature vector point to compute the score for
-     * @return the score computed for the given point
      */
     float score(FeatureVector point);
 
@@ -58,18 +52,12 @@ public interface LtrRanker {
      */
     interface FeatureVector {
         /**
-         * Set the score for the given featureId
-         *
-         * @param featureId the feature-id to set the score for
-         * @param score the feature's score
+         * Set the feature score.
          */
         void setFeatureScore(int featureId, float score);
 
         /**
-         * Retrieve the score for the given feature-id
-         *
-         * @param featureId the feature-id to retrieve the score for
-         * @return the score computed for the given feature
+         * Get the feature score
          */
         float getFeatureScore(int featureId);
 

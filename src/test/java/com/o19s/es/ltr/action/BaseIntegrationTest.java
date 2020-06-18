@@ -23,7 +23,6 @@ import com.o19s.es.ltr.feature.FeatureValidation;
 import com.o19s.es.ltr.feature.store.StorableElement;
 import com.o19s.es.ltr.feature.store.index.IndexFeatureStore;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
-import com.o19s.es.ltr.ranker.ranklib.RankLibScriptEngine;
 import org.apache.lucene.index.LeafReaderContext;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
@@ -42,13 +41,9 @@ import org.junit.Before;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 
-import static com.o19s.es.ltr.feature.store.ScriptFeature.EXTRA_LOGGING;
 import static com.o19s.es.ltr.feature.store.ScriptFeature.FEATURE_VECTOR;
 
 public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
@@ -101,7 +96,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
     }
 
     public <E extends StorableElement> E getElement(Class<E> clazz, String type, String name, String store) throws IOException {
-        return new IndexFeatureStore(store, this::client, parserFactory()).getAndParse(name, clazz, type);
+        return new IndexFeatureStore(store, client(), parserFactory()).getAndParse(name, clazz, type);
     }
 
     protected LtrRankerParserFactory parserFactory() {
@@ -173,9 +168,6 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                         if (!p.containsKey(FEATURE_VECTOR)) {
                                             throw new IllegalArgumentException("Missing parameter [" + FEATURE_VECTOR + "]");
                                         }
-                                        if (!p.containsKey(EXTRA_LOGGING)) {
-                                            throw new IllegalArgumentException("Missing parameter [" + EXTRA_LOGGING + "]");
-                                        }
                                         if (!p.containsKey(DEPDENDENT_FEATURE)) {
                                             throw new IllegalArgumentException("Missing parameter [depdendent_feature ]");
                                         }
@@ -190,7 +182,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
                                     public ScoreScript newInstance(LeafReaderContext ctx) throws IOException {
                                         return new ScoreScript(p, lookup, ctx) {
                                             @Override
-                                            public double execute(ExplanationHolder explainationHolder ) {
+                                            public double execute() {
                                                 return extraMultiplier == 0.0d ?
                                                         featureSupplier.get(dependentFeature) * 10 :
                                                         featureSupplier.get(dependentFeature) * extraMultiplier;
@@ -206,49 +198,7 @@ public abstract class BaseIntegrationTest extends ESSingleNodeTestCase {
 
                         return context.factoryClazz.cast(factory);
                     }
-                    else if (scriptSource.equals(FEATURE_EXTRACTOR + "_extra_logging")) {
-                        ScoreScript.Factory factory = (p, lookup) ->
-                                new ScoreScript.LeafFactory() {
-                                    {
-                                        if (!p.containsKey(FEATURE_VECTOR)) {
-                                            throw new IllegalArgumentException("Missing parameter [" + FEATURE_VECTOR + "]");
-                                        }
-                                        if (!p.containsKey(EXTRA_LOGGING)) {
-                                            throw new IllegalArgumentException("Missing parameter [" + EXTRA_LOGGING + "]");
-                                        }
-                                    }
-
-                                    @Override
-                                    public ScoreScript newInstance(LeafReaderContext ctx) throws IOException {
-                                        return new ScoreScript(p, lookup, ctx) {
-
-                                            @Override
-                                            public double execute(ExplanationHolder explanation) {
-                                                Map<String,Object> extraLoggingMap = ((Supplier<Map<String,Object>>) getParams()
-                                                        .get(EXTRA_LOGGING)).get();
-                                                if (extraLoggingMap != null) {
-                                                    extraLoggingMap.put("extra_float", 10.0f);
-                                                    extraLoggingMap.put("extra_string", "additional_info");
-                                                }
-                                                return 1.0d;
-                                            }
-                                        };
-                                    }
-
-                                    @Override
-                                    public boolean needs_score() {
-                                        return false;
-                                    }
-                                };
-
-                        return context.factoryClazz.cast(factory);
-                    }
                     throw new IllegalArgumentException("Unknown script name " + scriptSource);
-                }
-
-                @Override
-                public Set<ScriptContext<?>> getSupportedContexts() {
-                    return Collections.singleton(RankLibScriptEngine.CONTEXT);
                 }
             };
         }

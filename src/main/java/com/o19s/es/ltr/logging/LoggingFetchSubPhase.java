@@ -175,7 +175,6 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
 
     static class HitLogConsumer implements LogLtrRanker.LogConsumer {
         private static final String FIELD_NAME = "_ltrlog";
-        private static final String EXTRA_LOGGING_NAME = "extra_logging";
         private final String name;
         private final FeatureSet set;
         private final boolean missingAsZero;
@@ -191,7 +190,6 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         // ]
         private List<Map<String, Object>> currentLog;
         private SearchHit currentHit;
-        private Map<String,Object> extraLogging;
 
 
         HitLogConsumer(String name, FeatureSet set, boolean missingAsZero) {
@@ -201,9 +199,7 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
         }
 
         private void rebuild() {
-            // Allocate one Map per feature, plus one placeholder for an extra logging Map
-            // that will only be added if used.
-            List<Map<String, Object>> ini = new ArrayList<>(set.size() + 1);
+            List<Map<String, Object>> ini = new ArrayList<>(set.size());
 
             for (int i = 0; i < set.size(); i++) {
                 Map<String, Object> defaultKeyVal = new HashMap<>();
@@ -214,7 +210,6 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
                 ini.add(i, defaultKeyVal);
             }
             currentLog = ini;
-            extraLogging = null;
         }
 
         @Override
@@ -222,23 +217,6 @@ public class LoggingFetchSubPhase implements FetchSubPhase {
             assert currentLog != null;
             assert currentHit != null;
             currentLog.get(featureOrdinal).put("value", score);
-        }
-
-        /**
-         * Return Map to store additional logging information returned with the feature values.
-         *
-         * The Map is created on first access.
-         */
-        @Override
-        public Map<String,Object> getExtraLoggingMap() {
-            if (extraLogging == null) {
-                extraLogging = new HashMap<>();
-                Map<String,Object> logEntry = new HashMap<>();
-                logEntry.put("name", EXTRA_LOGGING_NAME);
-                logEntry.put("value", extraLogging);
-                currentLog.add(logEntry);
-            }
-            return extraLogging;
         }
 
         void nextDoc(SearchHit hit) {
