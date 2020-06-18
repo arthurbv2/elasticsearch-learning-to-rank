@@ -5,7 +5,6 @@ import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
@@ -29,7 +28,7 @@ public class MinMaxFeatureNormDefinition implements FeatureNormDefinition {
         PARSER.declareFloat(MinMaxFeatureNormDefinition::setMinimum, MINIMUM);
         PARSER.declareFloat(MinMaxFeatureNormDefinition::setMaximum, MAXIMUM);
     }
-
+    
     public MinMaxFeatureNormDefinition(StreamInput input) throws IOException {
         this.featureName = input.readString();
         this.minimum = input.readFloat();

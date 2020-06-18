@@ -22,7 +22,7 @@ import com.o19s.es.ltr.ranker.normalizer.FeatureNormalizingRanker;
 import com.o19s.es.ltr.ranker.normalizer.Normalizer;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParser;
 import com.o19s.es.ltr.ranker.parser.LtrRankerParserFactory;
-// import org.elasticsearch.Version;
+//import org.elasticsearch.Version;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.Strings;
@@ -88,9 +88,9 @@ public class StoredLtrModel implements StorableElement {
         rankingModel = input.readString();
         modelAsString = input.readBoolean();
         // if (input.getVersion().onOrAfter(Version.V_7_7_0)) {
-        this.parsedFtrNorms = new StoredFeatureNormalizers(input);
+        //    this.parsedFtrNorms = new StoredFeatureNormalizers(input);
         // } else {
-        //    this.parsedFtrNorms = new StoredFeatureNormalizers();
+        this.parsedFtrNorms = new StoredFeatureNormalizers();
         //}
     }
 
@@ -282,9 +282,9 @@ public class StoredLtrModel implements StorableElement {
             definition = in.readString();
             modelAsString = in.readBoolean();
             // if (in.getVersion().onOrAfter(Version.V_7_7_0)) {
-            this.featureNormalizers = new StoredFeatureNormalizers(in);
+            //    this.featureNormalizers = new StoredFeatureNormalizers(in);
             // } else {
-            //    this.featureNormalizers = new StoredFeatureNormalizers();
+            this.featureNormalizers = new StoredFeatureNormalizers();
             // }
         }
 
